@@ -1,0 +1,37 @@
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+const ProtectedRoute = ({ children }) => {
+  const { user, loading, isAuthenticated } = useAuth();
+
+  console.log('🔐 ProtectedRoute check:', { 
+    loading, 
+    isAuthenticated, 
+    hasUser: !!user,
+    userEmail: user?.email 
+  });
+
+  // Đang load AuthContext - chờ
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Sau khi load xong, check isAuthenticated từ AuthContext
+  if (!isAuthenticated) {
+    console.log('❌ Not authenticated, redirecting to login');
+    return <Navigate to="/login" replace />;
+  }
+
+  // Authenticated -> cho vào
+  console.log('✅ Authenticated, allowing access');
+  return children;
+};
+
+export default ProtectedRoute;
