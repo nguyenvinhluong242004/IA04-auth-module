@@ -38,19 +38,23 @@ export class UserController {
   ) {
     const result = await this.userService.login(loginUserDto);
     
+    // Cookie options for cross-domain
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction, // HTTPS only in production
+      sameSite: isProduction ? 'none' as const : 'lax' as const, // 'none' for cross-domain in prod
+    };
+    
     // Set access token in httpOnly cookie
     res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
     
     // Set refresh token in httpOnly cookie
     res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
     
@@ -91,19 +95,23 @@ export class UserController {
       // Try to refresh
       const result = await this.userService.refreshToken(refreshToken);
       
+      // Cookie options for cross-domain
+      const isProduction = process.env.NODE_ENV === 'production';
+      const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' as const : 'lax' as const,
+      };
+      
       // Set new access token in cookie
       res.cookie('accessToken', result.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        ...cookieOptions,
         maxAge: 15 * 60 * 1000, // 15 minutes
       });
       
       // Set new refresh token in cookie
       res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        ...cookieOptions,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
       
@@ -128,19 +136,23 @@ export class UserController {
     
     const result = await this.userService.refreshToken(refreshToken);
     
+    // Cookie options for cross-domain
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' as const : 'lax' as const,
+    };
+    
     // Set new access token in cookie
     res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
     
     // Set new refresh token in cookie
     res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
     
@@ -154,9 +166,16 @@ export class UserController {
     @Request() req,
     @Res({ passthrough: true }) res: Response,
   ) {
-    // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    // Clear cookies with same options as when set
+    const isProduction = process.env.NODE_ENV === 'production';
+    const clearOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' as const : 'lax' as const,
+    };
+    
+    res.clearCookie('accessToken', clearOptions);
+    res.clearCookie('refreshToken', clearOptions);
     
     return this.userService.logout(req.user.id);
   }
